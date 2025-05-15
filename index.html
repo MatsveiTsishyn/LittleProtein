@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>LittleProtein Demo</title>
+  <script src="littleprotein.js"></script>
+</head>
+<body>
+
+  <h2> Here is your LittleProtein Canvas 🌸🌸🌸</h2>
+  <div id="LittleProteinCanvas1"></div>
+  
+  <script>
+    const lpCanvas = LittleProteinStarter.start(
+      "#LittleProteinCanvas1", // ID to catch the div where to generate the canvas
+      "demo2",                 // Protein to draw among null, 'demo1', 'demo2', 'demo3', 'demo4'
+      1200,                    // width (X) of canvas
+      800,                     // height (Y) if canvas
+      {                        // parameters of the canvas
+        "backgroundColor": [230, 230, 230],
+        "depthShadeFactor": 1.0,
+        "viewDistance": 5.0,
+        "residuesScale": 1.0,
+        //"colorsList": [[148, 103, 189], [140,  86,  75]],
+        //"colorsMap": {"A": [50, 50, 50]},
+      }
+    );
+    //lpCanvas.drawer.setChainColor("E", [40, 40, 40]);
+    //lpCanvas.drawer.setResidueColor("E347", [200, 20, 20]);
+    //lpCanvas.fetch("P08397");
+    //lpCanvas.from_string(3);
+    //lpCanvas.fetch("7VCF");
+  </script>
+
+  <div style="max-width: 800px; word-wrap: break-word;">
+    You see an example of a protein structure,
+    but you can also drag and drop any '.pdb' file you have
+    (for instance taken from the PDB 'https://www.rcsb.org/').
+    You can also fetch structures from the PDB or the AlphaFoldDB
+    (from that, have a look to the 'index.html' code).
+  </div>
+
+</body>
+</html>
