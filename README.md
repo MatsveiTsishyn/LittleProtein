@@ -15,7 +15,7 @@ Author: Matsvei Tsishyn
 
 ### (1) Just play
 
-Just open `index.html` on a web brawser.
+Just open `demo.html` on a web brawser.
 You will see an example of a 3D protein structure, but you can draw and drop any '.pdb' file to display it instead.
 Use mouse left click, mouse wheel and Shift button to interact with the canvas.
 
