@@ -1755,7 +1755,6 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
         // Load demo protein
         loadDemoProtein(){
             this.fromString(demoProtein, "demo");
-            this.drawer.resetColors();
         }
 
         // Structure getter shortcut
