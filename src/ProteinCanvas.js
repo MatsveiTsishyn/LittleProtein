@@ -213,7 +213,6 @@ class ProteinCanvas {
     // Load demo protein
     loadDemoProtein(){
         this.fromString(demoProtein, "demo");
-        this.drawer.resetColors();
     }
 
     // Structure getter shortcut
