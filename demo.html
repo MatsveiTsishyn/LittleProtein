@@ -7,38 +7,51 @@
 </head>
 <body>
 
-  <h2> Here is your LittleProtein Canvas 🌸🌸🌸</h2>
+  <h2>🌸🌸🌸 Here is your LittleProtein Canvas 🌸🌸🌸</h2>
   <div id="LittleProteinCanvas1"></div>
   
   <script>
     const lpCanvas = LittleProteinStarter.start(
-      "#LittleProteinCanvas1", // ID to catch the div where to generate the canvas
-      "demo1",                 // Protein to draw among null, 'demo1', 'demo2', 'demo3', 'demo4'
-      1200,                    // width (X) of canvas
-      800,                     // height (Y) if canvas
+      "#LittleProteinCanvas1", // ID to find the HTML div where to generate the canvas
+      1200,                    // width (X coordinate) of the canvas
+      800,                     // height (Y coordinate) of the canvas
       {                        // parameters of the canvas
-        "backgroundColor": [230, 230, 230],
-        "depthShadeFactor": 1.0,
-        "viewDistance": 5.0,
-        "residuesScale": 1.0,
-        //"colorsList": [[148, 103, 189], [140,  86,  75]],
+        //"backgroundColor": [150, 230, 230],
+        //"depthShadeFactor": 2.0,
+        //"viewDistance": 1.0,
+        //"residuesScale": 2.0,
+        //"colorsList": [
+        //  [ 20,  20,  20],
+        //  [ 60,  60,  60],
+        //  [100, 100, 100],
+        //],
         //"colorsMap": {"A": [50, 50, 50]},
       }
     );
-    //lpCanvas.drawer.setChainColor("E", [40, 40, 40]);
-    //lpCanvas.drawer.setResidueColor("E347", [200, 20, 20]);
-    //lpCanvas.fetch("P08397");
-    //lpCanvas.from_string(3);
-    //lpCanvas.fetch("7VCF");
+    lpCanvas.loadDemoProtein(); // Load default demo protein strucure
+
+    // Set colors
+    //lpCanvas.setChainColor("A", [40, 40, 40]);         // Set color of a chain
+    //lpCanvas.setResidueColor("A13", [40, 180, 40]);    // Set color of a residue
+    //lpCanvas.proteinStructure.residues.forEach(res => {
+    //  if(res.aa.three == "ALA"){
+    //    lpCanvas.setResidueColor(res.resid, [  0,  15, 35]);
+    //  }
+    //});
+
+    // Load another protein
+    //lpCanvas.from_string("XXX");   // Load from a string
+    //lpCanvas.fetch("3JCL");        // Fetch from the PDB
+    //lpCanvas.fetch("P08397");      // Fetch from the AlphaFoldDB using UniProt ID
+
   </script>
 
-  <div style="max-width: 800px; word-wrap: break-word;">
-    You see an example of a protein structure,
-    but you can also drag and drop any '.pdb' file you have
-    (for instance taken from the PDB 'https://www.rcsb.org/').
-    You can also fetch structures from the PDB or the AlphaFoldDB
-    (from that, have a look to the 'index.html' code).
-  </div>
+  <p style="max-width: 1200px; word-wrap: break-word;">
+    * Here you see an example of a protein 3D structure,
+    but you can also drag and drop any '.pdb' file you have.<br>
+    PS: you can find some in the <a href="https://www.rcsb.org/">Protein Data Bank</a>
+
+  </p>
 
 </body>
 </html>

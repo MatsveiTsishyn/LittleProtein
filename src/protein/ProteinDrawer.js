@@ -57,33 +57,28 @@ export class ProteinDrawer {
         this.zoom = Math.min(X, Y)*0.80;
         this.zoomRange = [Math.min(X, Y)*0.05, Math.max(X, Y)*4];
 
-        // Init options
-        this.options = options;
-
+        // Init default options
         this.colorsList = ProteinDrawer.COLORS_LIST;
-        if ("colorsList" in options) this.setColorsList(options["colorsList"]);
-
         this.colorsMap = {};
-        if ("colorsMap" in options) this.setColorsMap(options["colorsMap"]);
-        
         this.backgroundColor = ProteinDrawer.BACKGROUND_COLOR;
         this.fontColor = ProteinDrawer.FONT_COLOR;
-        if ("backgroundColor" in options) this.setBackgroundColor(options["backgroundColor"]);
-
-        this.depthShadeFactor = ProteinDrawer.DEPTH_SHADE_FACTOR
-        if ("depthShadeFactor" in options) this.setDepthShadeFactor(options["depthShadeFactor"]);
-
+        this.depthShadeFactor = ProteinDrawer.DEPTH_SHADE_FACTOR;
         this.viewDistance = ProteinDrawer.VIEW_DISTANCE;
-        if ("viewDistance" in options) this.setViewDistance(options["viewDistance"]);
-
         this.residuesScale = ProteinDrawer.RESIDUEE_SCALE;
-        if ("residuesScale" in options) this.setResiduesScale(options["residuesScale"]);
-
         this.emptyDisplayText = ProteinDrawer.EMPTY_DISPLAY_TEXT;
-        if ("emptyDisplayText" in options) this.setEmptyDisplayText(options["emptyDisplayText"]);
 
         // Init structure
         this.setProteinStructure(structure);
+
+        // Init options
+        this.options = options;
+        if ("colorsList" in options) this.setColorsList(options["colorsList"]);
+        if ("colorsMap" in options) this.setColorsMap(options["colorsMap"]);
+        if ("backgroundColor" in options) this.setBackgroundColor(options["backgroundColor"]);
+        if ("depthShadeFactor" in options) this.setDepthShadeFactor(options["depthShadeFactor"]);
+        if ("viewDistance" in options) this.setViewDistance(options["viewDistance"]);
+        if ("residuesScale" in options) this.setResiduesScale(options["residuesScale"]);
+        if ("emptyDisplayText" in options) this.setEmptyDisplayText(options["emptyDisplayText"]);
 
     }
 
@@ -116,11 +111,15 @@ export class ProteinDrawer {
         });
     }
 
+    resetColors(){
+        this.setProteinStructure(this.proteinStructure);
+    }
+
     clear() {
         this.setProteinStructure(ProteinStructure.empty_structure());
     }
 
-    setResidueColor(resid, color_arr){
+    setResidueColor(resid, colorRGB){
 
         // Guardians
         const residue = this.proteinStructure.getResidue(resid);
@@ -128,26 +127,26 @@ export class ProteinDrawer {
             console.warn(`ERROR in ProteinDrawer.setResidueColor(): resid='${resid}' does not exists in current protein structure.`);
             return null;
         }
-        if (!Color.isColorFormat(color_arr)){
-            console.warn(`ERROR in ProteinDrawer.setResidueColor(): invalid color_arr='${color_arr}'.`);
+        if (!Color.isColorFormat(colorRGB)){
+            console.warn(`ERROR in ProteinDrawer.setResidueColor(): invalid colorRGB='${colorRGB}'.`);
             return null;
         }
 
         // Set Color
-        residue.setColor(color_arr);
+        residue.setColor(colorRGB);
     }
 
-    setChainColor(chain, color_arr){
+    setChainColor(chain, colorRGB){
 
         // Guardians
-        if (!Color.isColorFormat(color_arr)){
-            console.warn(`ERROR in ProteinDrawer.setChainColor(): invalid color_arr='${color_arr}'.`);
+        if (!Color.isColorFormat(colorRGB)){
+            console.warn(`ERROR in ProteinDrawer.setChainColor(): invalid colorRGB='${colorRGB}'.`);
             return null;
         }
 
         // Set color
         this.proteinStructure.residues.forEach( res => {
-            if (res.chain == chain) res.setColor(color_arr);
+            if (res.chain == chain) res.setColor(colorRGB);
         })
     }
 
@@ -165,37 +164,43 @@ export class ProteinDrawer {
 
         // Set colors list
         this.colorsList = colorsList;
+
+        // Draw
+        this.resetColors()
     }
 
     setColorsMap(colorsMap){
 
         // Guardian
         if (colorsMap.constructor !== Object) { // check it is a dictionary (JavaScript is doomed ...)
-            console.warn("");
+            console.warn("ProteinDrawer.setColorsMap() Failed: incorrect input colorsMap type (should be a dictionary).");
             return null;
         }
         if (!Object.entries(colorsMap).every(([key, value]) => typeof(key) == "string" && key.length == 1 && Color.isColorFormat(value))) {
-            console.warn("");
+            console.warn("ProteinDrawer.setColorsMap() Failed: incorrect color or chain descriptor.");
             return null;
         }
 
         // Set Colors Map
         this.colorsMap = colorsMap;
+
+        // Draw
+        this.resetColors()
     }
 
-    setBackgroundColor(color_rbg){
+    setBackgroundColor(colorRGB){
 
         // Verify coherence
-        if (!Color.isColorFormat(color_rbg)){
+        if (!Color.isColorFormat(colorRGB)){
             console.warn("ProteinDrawer.setBackgroundColor() Failed: incorrect input color.");
             return null;
         }
 
         // Normalize color
-        this.backgroundColor = color_rbg;
+        this.backgroundColor = colorRGB;
 
         // Set font color
-        const backgroundMean = (color_rbg[0] + color_rbg[1] + color_rbg[2]) / 3;
+        const backgroundMean = (colorRGB[0] + colorRGB[1] + colorRGB[2]) / 3;
         if (backgroundMean < 128) {
             this.fontColor = [210, 210, 210];
         } else {

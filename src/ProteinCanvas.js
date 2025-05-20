@@ -11,10 +11,10 @@ ProteinCanvas: Manage interaction between the canvas (html page) and the Protein
 
 // Imports ---------------------------------------------------------------------
 import './libs/p5.min.js';
-import { demoProteins } from './protein/demo-proteins.js'
+import { demoProtein } from './protein/demo-protein.js';
 import { ProteinDrawer } from './protein/ProteinDrawer.js';
-import { ProteinStructure } from './protein/ProteinStructure.js'
-import { fetch_pdb, fetch_uniprot } from './utils/fetch.js'
+import { ProteinStructure } from './protein/ProteinStructure.js';
+import { fetch_pdb, fetch_uniprot } from './utils/fetch.js';
 
 
 // Main ------------------------------------------------------------------------
@@ -22,7 +22,7 @@ class ProteinCanvas {
 
 
     // Constructor -------------------------------------------------------------
-    constructor(containerSelector, protein_ref, X, Y, options = {}) {
+    constructor(containerSelector, X, Y, options = {}) {
 
         // Init Drawer Object and canvas base properties
         this.containerSelector = containerSelector;
@@ -33,12 +33,6 @@ class ProteinCanvas {
 
         // Init Protein Structure
         let structure = ProteinStructure.empty_structure();
-        if (protein_ref in demoProteins) {
-            structure = ProteinStructure.parse_pdb(
-                protein_ref,
-                demoProteins[protein_ref],
-            );
-        }
 
         // Init Drawer
         this.drawer = new ProteinDrawer(structure, X, Y, options);
@@ -188,12 +182,12 @@ class ProteinCanvas {
         }
 
         // Load .pdb file
-        this.from_string(pdb_str, file_name);
+        this.fromString(pdb_str, file_name);
 
     }
 
     // Load structure from input string
-    from_string(pdb_str, pdb_name="protein_structure_string"){
+    fromString(pdb_str, pdb_name="protein_structure_string"){
 
         // Init
         this.drawer.setEmptyDisplayText(`from_string('${pdb_name}'): Load PDB ...`);
@@ -216,6 +210,59 @@ class ProteinCanvas {
 
     }
 
+    // Load demo protein
+    loadDemoProtein(){
+        this.fromString(demoProtein, "demo");
+        this.drawer.resetColors();
+    }
+
+    // Structure getter shortcut
+    get proteinStructure(){
+        return this.drawer.proteinStructure;
+    }
+    
+
+    // Drawer settings ---------------------------------------------------------
+    setColorsList(colorsList){
+        this.drawer.setColorsList(colorsList);
+        this.forceDrawNextFrame = true;
+    }
+
+    setColorsMap(colorsMap){
+        this.drawer.setColorsMap(colorsMap);
+        this.forceDrawNextFrame = true;
+    }
+
+    setBackgroundColor(colorRGB){
+        this.drawer.setBackgroundColor(colorRGB);
+        this.forceDrawNextFrame = true;
+    }
+
+    setDepthShadeFactor(depthShadeFactor){
+        this.drawer.setDepthShadeFactor(depthShadeFactor);
+        this.forceDrawNextFrame = true;
+    }
+
+    setViewDistance(viewDistance){
+        this.drawer.setViewDistance(viewDistance);
+        this.forceDrawNextFrame = true;
+    }
+
+    setResiduesScale(residuesScale){
+        this.drawer.setResiduesScale(residuesScale);
+        this.forceDrawNextFrame = true;
+    }
+
+    setResidueColor(resid, colorRGB){
+        this.drawer.setResidueColor(resid, colorRGB);
+        this.forceDrawNextFrame = true;
+    }
+
+    setChainColor(chain, colorRGB){
+        this.drawer.setChainColor(chain, colorRGB);
+        this.forceDrawNextFrame = true;
+    }
+
 
     // Dependencies ------------------------------------------------------------
     logError(error_message){
@@ -229,5 +276,5 @@ class ProteinCanvas {
 
 // Expose as global API --------------------------------------------------------
 window.LittleProteinStarter = {
-  start: (selector, name, X, Y, options) => new ProteinCanvas(selector, name, X, Y, options),
+  start: (selector, X, Y, options) => new ProteinCanvas(selector, X, Y, options),
 };

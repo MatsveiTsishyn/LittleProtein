@@ -53,7 +53,7 @@ export class ProteinStructure {
                 const chain = line[21];
                 if (closedChains.has(chain)) continue;
 
-                const resid = line.substring(21, 27).replace(/\s+/g, ''); // JavaScript is doomed
+                const resid = line.substring(21, 27).replace(/\s+/g, ''); // Delete all " " from string (JavaScript is doomed ...)
                 const cAlpha = [
                     parseFloat(line.substring(30, 38)),
                     parseFloat(line.substring(38, 46)),
