@@ -1,7 +1,7 @@
 
 # LittleProtein
 
-[![License: GPL](https://img.shields.io/badge/License-GPL-green.svg)](https://opensource.org/licenses/MIT)
+[![License: GPL](https://img.shields.io/badge/License-GPL-green.svg)](https://opensource.org/licenses/MIT) [![Demo](https://img.shields.io/badge/Demo-Live-blue)](https://MatsveiTsishyn.github.io/LittleProtein/)
 <div style="text-align: center;">
 <img src="logo.png" alt="[LittleProtein Logo]" height="400"/>
 </div>
