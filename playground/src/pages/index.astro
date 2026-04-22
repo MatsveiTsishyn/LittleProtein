@@ -214,6 +214,42 @@
       cursor: pointer;
     }
 
+    /* ── Color palette ── */
+    #color-palette {
+      position: absolute;
+      background: var(--bg-sidebar);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .palette-colors {
+      display: grid;
+      grid-template-columns: repeat(5, 20px);
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    .palette-color {
+      width: 20px;
+      height: 20px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .palette-color:hover {
+      border-color: var(--accent);
+    }
+
+    #custom-color-btn {
+      width: 100%;
+      padding: 4px;
+      font-size: 11px;
+    }
+
     /* ── Chain rows ── */
     #chains-list {
       display: flex;
@@ -390,6 +426,12 @@
         </div>
       </div>
 
+      <!-- Color palette popup -->
+      <div id="color-palette" class="hidden">
+        <div class="palette-colors"></div>
+        <button id="custom-color-btn">Custom</button>
+      </div>
+
     </aside>
 
     <div class="canvas-area">
@@ -403,6 +445,19 @@
   import '../../../src/ProteinCanvas.js';
 
   let canvas = null;
+
+  const DEFAULT_COLORS = [
+    [0, 95, 115],
+    [238, 155, 0],
+    [225, 0, 12],
+    [44, 160, 44],
+    [148, 103, 189],
+    [140, 86, 75],
+    [227, 119, 194],
+    [127, 127, 127],
+    [188, 189, 34],
+    [23, 190, 207],
+  ];
 
   // ── Hover state ───────────────────────────────────────────────────────────────
   // Maps resid → original RGB, populated while something is highlighted
@@ -566,6 +621,7 @@
       const picker = document.createElement('input');
       picker.type = 'color';
       picker.value = hex;
+      picker.style.display = 'none';
       picker.addEventListener('input', (e) => {
         clearHighlight();
         const rgb = hexToRgb(e.target.value);
@@ -573,15 +629,24 @@
         document.querySelectorAll(`.residue-row[data-chain="${chain}"] .res-color`).forEach(el => {
           el.value = e.target.value;
         });
+        document.querySelectorAll(`.residue-row[data-chain="${chain}"] .color-swatch`).forEach(el => {
+          el.style.backgroundColor = e.target.value;
+        });
+        updateSwatch(chain, e.target.value);
       });
 
       const swatch = document.createElement('div');
       swatch.className = 'color-swatch';
-      swatch.appendChild(picker);
+      swatch.style.backgroundColor = hex;
+      swatch.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showPalette(chain, swatch, picker);
+      });
 
       row.appendChild(badge);
       row.appendChild(label);
       row.appendChild(swatch);
+      row.appendChild(picker);
       list.appendChild(row);
     }
 
@@ -600,6 +665,55 @@
       document.querySelectorAll('.chain-row.is-hovered').forEach(r => r.classList.remove('is-hovered'));
       clearHighlight();
     });
+  }
+
+  function updateSwatch(chain, hex) {
+    const swatch = document.querySelector(`.chain-row[data-chain="${chain}"] .color-swatch`);
+    if (swatch) swatch.style.backgroundColor = hex;
+  }
+
+  function showPalette(identifier, swatch, picker, isResidue = false) {
+    const palette = document.getElementById('color-palette');
+    const colorsDiv = palette.querySelector('.palette-colors');
+    colorsDiv.innerHTML = '';
+
+    DEFAULT_COLORS.forEach(rgb => {
+      const colorDiv = document.createElement('div');
+      colorDiv.className = 'palette-color';
+      colorDiv.style.backgroundColor = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+      colorDiv.addEventListener('click', () => {
+        const hex = rgbToHex(rgb);
+        picker.value = hex;
+        picker.dispatchEvent(new Event('input'));
+        hidePalette();
+      });
+      colorsDiv.appendChild(colorDiv);
+    });
+
+    const customBtn = palette.querySelector('#custom-color-btn');
+    customBtn.onclick = () => {
+      picker.click();
+      hidePalette();
+    };
+
+    // Position the palette
+    const rect = swatch.getBoundingClientRect();
+    palette.style.left = `${rect.left}px`;
+    palette.style.top = `${rect.bottom + 5}px`;
+    palette.classList.remove('hidden');
+
+    // Hide on click outside
+    const hideOnClick = (e) => {
+      if (!palette.contains(e.target) && e.target !== swatch) {
+        hidePalette();
+        document.removeEventListener('click', hideOnClick);
+      }
+    };
+    setTimeout(() => document.addEventListener('click', hideOnClick), 0);
+  }
+
+  function hidePalette() {
+    document.getElementById('color-palette').classList.add('hidden');
   }
 
   function renderResidues(residues) {
@@ -625,18 +739,25 @@
       picker.type = 'color';
       picker.className = 'res-color';
       picker.value = rgbToHex(res.color.RGB);
+      picker.style.display = 'none';
       picker.addEventListener('input', (e) => {
         clearHighlight();
         canvas.setResidueColor(res.resid, hexToRgb(e.target.value));
+        swatch.style.backgroundColor = e.target.value;
       });
 
       const swatch = document.createElement('div');
       swatch.className = 'color-swatch';
-      swatch.appendChild(picker);
+      swatch.style.backgroundColor = rgbToHex(res.color.RGB);
+      swatch.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showPalette(res.resid, swatch, picker, true); // true for residue
+      });
 
       row.appendChild(idSpan);
       row.appendChild(aaSpan);
       row.appendChild(swatch);
+      row.appendChild(picker);
       fragment.appendChild(row);
     }
     list.appendChild(fragment);
