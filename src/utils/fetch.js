@@ -36,7 +36,7 @@ export async function fetch_uniprot(uniprot_id) {
 
     // Generate url
     const uniprot_id_upper = uniprot_id.toUpperCase();
-    const url = `https://alphafold.ebi.ac.uk/files/AF-${uniprot_id_upper}-F1-model_v4.pdb`
+    const url = `https://alphafold.ebi.ac.uk/files/AF-${uniprot_id_upper}-F1-model_v6.pdb`
 
     // Fetch
     const response = await fetch(url);

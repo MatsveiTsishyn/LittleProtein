@@ -145,7 +145,7 @@ class ProteinCanvas {
                 pdb_str = await fetch_uniprot(pdb_id);
             }
         } catch(error) {
-            this.logError(`ERROR in ProteinCanvas.fetch('${pdb_id}'): fetch failed from PDB: \n${error.message}`);
+            this.logError(`ERROR in ProteinCanvas.fetch('${pdb_id}')\n${error.message}`);
             return null;
         }
 

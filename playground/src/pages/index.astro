@@ -62,6 +62,21 @@
       padding: 2px 9px;
     }
 
+    header .source-link {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 6px 6px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--bg-input);
+    }
+
+    header .source-link:hover {
+      background: var(--row-hover-bg);
+      border-color: var(--border-focus);
+    }
+
     .layout {
       display: flex;
       flex: 1;
@@ -306,7 +321,7 @@
 
   <header>
     <h1>LittleProtein</h1>
-    <span class="tag">Playground</span>
+    <a href="https://github.com/MatsveiTsishyn/LittleProtein" target="_blank" class="source-link">Source Code</a>
   </header>
 
   <div class="layout">
@@ -315,12 +330,17 @@
 
       <!-- Fetch -->
       <div class="section">
-        <div class="section-title">Fetch Protein</div>
-        <input type="text" id="protein-id" placeholder="PDB ID (4 chars) or UniProt ID" autocomplete="off" spellcheck="false" />
+        <div class="section-title">Load Protein</div>
         <div class="btn-row">
-          <button id="btn-pdb">PDB</button>
-          <button id="btn-alphafold">AlphaFold</button>
           <button id="btn-demo">Demo</button>
+        </div>
+        <div class="btn-row">
+          <input type="text" id="pdb-id" placeholder="PDB e.g. '9jsk'" autocomplete="off" spellcheck="false" />
+          <button id="btn-pdb">PDB</button>
+        </div>
+        <div class="btn-row">
+          <input type="text" id="uniprot-id" placeholder="UniProt e.g. 'P01116'" autocomplete="off" spellcheck="false" />
+          <button id="btn-alphafold">AlphaFold</button>
         </div>
         <div class="status" id="status"></div>
       </div>
@@ -435,12 +455,12 @@
   // ── Controls ──────────────────────────────────────────────────────────────────
   function setupControls() {
     document.getElementById('btn-pdb').addEventListener('click', () => {
-      const id = document.getElementById('protein-id').value.trim();
+      const id = document.getElementById('pdb-id').value.trim();
       if (id) fetchProtein(id);
     });
 
     document.getElementById('btn-alphafold').addEventListener('click', () => {
-      const id = document.getElementById('protein-id').value.trim();
+      const id = document.getElementById('uniprot-id').value.trim();
       if (id) fetchProtein(id);
     });
 
@@ -451,7 +471,13 @@
       updateColorUI();
     });
 
-    document.getElementById('protein-id').addEventListener('keydown', (e) => {
+    document.getElementById('pdb-id').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const id = e.target.value.trim();
+        if (id) fetchProtein(id);
+      }
+    });
+    document.getElementById('uniprot-id').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         const id = e.target.value.trim();
         if (id) fetchProtein(id);

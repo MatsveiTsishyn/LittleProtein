@@ -1492,7 +1492,7 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
 
         // Generate url
         const uniprot_id_upper = uniprot_id.toUpperCase();
-        const url = `https://alphafold.ebi.ac.uk/files/AF-${uniprot_id_upper}-F1-model_v4.pdb`;
+        const url = `https://alphafold.ebi.ac.uk/files/AF-${uniprot_id_upper}-F1-model_v6.pdb`;
 
         // Fetch
         const response = await fetch(url);
@@ -1687,7 +1687,7 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
                     pdb_str = await fetch_uniprot(pdb_id);
                 }
             } catch(error) {
-                this.logError(`ERROR in ProteinCanvas.fetch('${pdb_id}'): fetch failed from PDB: \n${error.message}`);
+                this.logError(`ERROR in ProteinCanvas.fetch('${pdb_id}')\n${error.message}`);
                 return null;
             }
 
