@@ -1,0 +1,668 @@
+---
+---
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LittleProtein — Playground</title>
+  <style is:global>
+    :root {
+      --bg:           #0d1117;
+      --bg-sidebar:   #161b22;
+      --bg-input:     #0d1117;
+      --border:       #21262d;
+      --border-focus: #388bfd;
+      --text:         #c9d1d9;
+      --text-muted:   #6e7681;
+      --text-heading: #f0f6fc;
+      --accent:       #388bfd;
+      --row-hover-bg: #1c2128;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      font-size: 13px;
+      overflow: hidden;
+    }
+
+    /* ── Layout ── */
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 20px;
+      height: 48px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    header h1 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-heading);
+    }
+
+    header .tag {
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2px 9px;
+    }
+
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 260px;
+      flex-shrink: 0;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .section {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-title {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    /* ── Inputs ── */
+    input[type="text"] {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 6px 10px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--border-focus);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    button {
+      flex: 1;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 6px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    button:hover:not(:disabled) {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .status {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+      min-height: 16px;
+      word-break: break-word;
+    }
+
+    /* ── Sliders ── */
+    .control-row {
+      display: grid;
+      grid-template-columns: 88px 1fr 34px;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 11px;
+    }
+
+    .control-row:last-child { margin-bottom: 0; }
+
+    .control-row label {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .control-row input[type="range"] {
+      min-width: 0;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .control-row .val {
+      text-align: right;
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+    }
+
+    /* ── Color pickers ── */
+    .color-swatch {
+      width: 28px;
+      height: 16px;
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .color-swatch input[type="color"] {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 200%;
+      height: 200%;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    /* ── Chain rows ── */
+    #chains-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .chain-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 6px;
+      border-radius: 5px;
+      cursor: default;
+      transition: background 0.1s;
+    }
+
+    .chain-row.is-hovered,
+    .chain-row:hover {
+      background: var(--row-hover-bg);
+    }
+
+    .chain-badge {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-heading);
+    }
+
+    .chain-label {
+      flex: 1;
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ── Residue list ── */
+    .residue-filter {
+      margin-bottom: 10px;
+    }
+
+    .residue-list {
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    #residues-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .residue-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      cursor: default;
+      transition: background 0.1s;
+    }
+
+    .residue-row.is-hovered,
+    .residue-row:hover {
+      background: var(--row-hover-bg);
+    }
+
+    .residue-id {
+      flex: 1;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 11px;
+      color: var(--text);
+    }
+
+    .residue-aa {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* ── Canvas area ── */
+    .canvas-area {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    #protein-canvas canvas { display: block; }
+
+    .hidden { display: none !important; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <h1>LittleProtein</h1>
+    <span class="tag">Playground</span>
+  </header>
+
+  <div class="layout">
+
+    <aside class="sidebar">
+
+      <!-- Fetch -->
+      <div class="section">
+        <div class="section-title">Fetch Protein</div>
+        <input type="text" id="protein-id" placeholder="PDB ID (4 chars) or UniProt ID" autocomplete="off" spellcheck="false" />
+        <div class="btn-row">
+          <button id="btn-pdb">PDB</button>
+          <button id="btn-alphafold">AlphaFold</button>
+          <button id="btn-demo">Demo</button>
+        </div>
+        <div class="status" id="status"></div>
+      </div>
+
+      <!-- Canvas settings -->
+      <div class="section">
+        <div class="section-title">Canvas</div>
+
+        <div class="control-row">
+          <label>Depth shade</label>
+          <input type="range" id="depth-shade" min="-10" max="10" step="0.1" value="1" />
+          <span class="val" id="depth-shade-val">1.0</span>
+        </div>
+
+        <div class="control-row">
+          <label>View distance</label>
+          <input type="range" id="view-distance" min="0.5" max="20" step="0.1" value="5" />
+          <span class="val" id="view-distance-val">5.0</span>
+        </div>
+
+        <div class="control-row">
+          <label>Residue scale</label>
+          <input type="range" id="residue-scale" min="0.05" max="5" step="0.05" value="1" />
+          <span class="val" id="residue-scale-val">1.00</span>
+        </div>
+
+        <div class="control-row">
+          <label>Background</label>
+          <input type="color" id="bg-color" value="#0d1117" />
+        </div>
+      </div>
+
+      <!-- Chain colors (revealed after load) -->
+      <div class="section hidden" id="chains-section">
+        <div class="section-title">Chain Colors</div>
+        <div id="chains-list"></div>
+      </div>
+
+      <!-- Residue colors (revealed after load) -->
+      <div class="section hidden" id="residues-section">
+        <div class="section-title">Residue Colors</div>
+        <div class="residue-filter">
+          <input type="text" id="residue-filter" placeholder="Filter by chain, position, AA…" autocomplete="off" />
+        </div>
+        <div class="residue-list">
+          <div id="residues-list"></div>
+        </div>
+      </div>
+
+    </aside>
+
+    <div class="canvas-area">
+      <div id="protein-canvas"></div>
+    </div>
+
+  </div>
+</div>
+</body>
+<script>
+  import '../../../src/ProteinCanvas.js';
+
+  let canvas = null;
+
+  // ── Hover state ───────────────────────────────────────────────────────────────
+  // Maps resid → original RGB, populated while something is highlighted
+  const savedColors = new Map();
+
+  function highlightChain(chain) {
+    clearHighlight();
+    const residues = canvas?.proteinStructure?.residues;
+    if (!residues) return;
+    for (const res of residues) {
+      if (res.chain !== chain) continue;
+      savedColors.set(res.resid, res.color.RGB.slice());
+      canvas.setResidueColor(res.resid, lighten(res.color.RGB));
+    }
+    // Single redraw after batch color updates
+    canvas.forceDrawNextFrame = true;
+  }
+
+  function highlightResidue(resid) {
+    clearHighlight();
+    const res = canvas?.proteinStructure?.getResidue(resid);
+    if (!res) return;
+    savedColors.set(resid, res.color.RGB.slice());
+    canvas.setResidueColor(resid, lighten(res.color.RGB));
+  }
+
+  function clearHighlight() {
+    if (savedColors.size === 0) return;
+    for (const [resid, rgb] of savedColors) {
+      canvas.setResidueColor(resid, rgb);
+    }
+    savedColors.clear();
+    canvas.forceDrawNextFrame = true;
+  }
+
+  function lighten([r, g, b]) {
+    return [Math.min(255, r + 80), Math.min(255, g + 80), Math.min(255, b + 80)];
+  }
+
+  // ── Init canvas ───────────────────────────────────────────────────────────────
+  requestAnimationFrame(() => {
+    const area = document.querySelector('.canvas-area');
+    const size = Math.max(Math.min(area.clientWidth, area.clientHeight) - 24, 400);
+    canvas = window.LittleProteinStarter.start('#protein-canvas', size, size, { backgroundColor: [13, 17, 23] });
+    setupControls();
+    canvas.loadDemoProtein();
+    updateColorUI();
+  });
+
+  // ── Controls ──────────────────────────────────────────────────────────────────
+  function setupControls() {
+    document.getElementById('btn-pdb').addEventListener('click', () => {
+      const id = document.getElementById('protein-id').value.trim();
+      if (id) fetchProtein(id);
+    });
+
+    document.getElementById('btn-alphafold').addEventListener('click', () => {
+      const id = document.getElementById('protein-id').value.trim();
+      if (id) fetchProtein(id);
+    });
+
+    document.getElementById('btn-demo').addEventListener('click', () => {
+      clearHighlight();
+      canvas.loadDemoProtein();
+      setStatus('');
+      updateColorUI();
+    });
+
+    document.getElementById('protein-id').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const id = e.target.value.trim();
+        if (id) fetchProtein(id);
+      }
+    });
+
+    const depthShade = document.getElementById('depth-shade');
+    depthShade.addEventListener('input', () => {
+      const v = parseFloat(depthShade.value);
+      document.getElementById('depth-shade-val').textContent = v.toFixed(1);
+      canvas?.setDepthShadeFactor(v);
+    });
+
+    const viewDist = document.getElementById('view-distance');
+    viewDist.addEventListener('input', () => {
+      const v = parseFloat(viewDist.value);
+      document.getElementById('view-distance-val').textContent = v.toFixed(1);
+      canvas?.setViewDistance(v);
+    });
+
+    const residueScale = document.getElementById('residue-scale');
+    residueScale.addEventListener('input', () => {
+      const v = parseFloat(residueScale.value);
+      document.getElementById('residue-scale-val').textContent = v.toFixed(2);
+      canvas?.setResiduesScale(v);
+    });
+
+    document.getElementById('bg-color').addEventListener('input', (e) => {
+      canvas?.setBackgroundColor(hexToRgb(e.target.value));
+    });
+
+    document.getElementById('residue-filter').addEventListener('input', (e) => {
+      filterResidues(e.target.value.trim().toLowerCase());
+    });
+  }
+
+  // ── Fetch ─────────────────────────────────────────────────────────────────────
+  async function fetchProtein(id) {
+    clearHighlight();
+    setLoading(true);
+    setStatus('Fetching…');
+    await canvas.fetch(id);
+    setLoading(false);
+    const structure = canvas.proteinStructure;
+    if (!structure.isEmpty()) {
+      setStatus('');
+      updateColorUI();
+    } else {
+      setStatus('Failed — check the ID and try again.');
+    }
+  }
+
+  // ── Color UI ──────────────────────────────────────────────────────────────────
+  function updateColorUI() {
+    clearHighlight();
+    const structure = canvas.proteinStructure;
+    if (!structure || structure.isEmpty()) return;
+
+    renderChains(structure);
+    renderResidues(structure.residues);
+
+    document.getElementById('chains-section').classList.remove('hidden');
+    document.getElementById('residues-section').classList.remove('hidden');
+  }
+
+  function renderChains(structure) {
+    const list = document.getElementById('chains-list');
+    list.innerHTML = '';
+
+    for (const chain of structure.chains) {
+      const chainResidues = structure.residues.filter(r => r.chain === chain);
+      const hex = chainResidues[0] ? rgbToHex(chainResidues[0].color.RGB) : '#888888';
+
+      const row = document.createElement('div');
+      row.className = 'chain-row';
+      row.dataset.chain = chain;
+
+      const badge = document.createElement('span');
+      badge.className = 'chain-badge';
+      badge.textContent = chain;
+
+      const label = document.createElement('span');
+      label.className = 'chain-label';
+      label.textContent = `${chainResidues.length} residue${chainResidues.length !== 1 ? 's' : ''}`;
+
+      const picker = document.createElement('input');
+      picker.type = 'color';
+      picker.value = hex;
+      picker.addEventListener('input', (e) => {
+        clearHighlight();
+        const rgb = hexToRgb(e.target.value);
+        canvas.setChainColor(chain, rgb);
+        document.querySelectorAll(`.residue-row[data-chain="${chain}"] .res-color`).forEach(el => {
+          el.value = e.target.value;
+        });
+      });
+
+      const swatch = document.createElement('div');
+      swatch.className = 'color-swatch';
+      swatch.appendChild(picker);
+
+      row.appendChild(badge);
+      row.appendChild(label);
+      row.appendChild(swatch);
+      list.appendChild(row);
+    }
+
+    // Hover delegation on the chains container
+    list.addEventListener('mouseover', (e) => {
+      const row = e.target.closest('.chain-row');
+      if (!row) return;
+      const chain = row.dataset.chain;
+      if (savedColors.size > 0 && row.classList.contains('is-hovered')) return;
+      document.querySelectorAll('.chain-row.is-hovered').forEach(r => r.classList.remove('is-hovered'));
+      row.classList.add('is-hovered');
+      highlightChain(chain);
+    });
+
+    list.addEventListener('mouseleave', () => {
+      document.querySelectorAll('.chain-row.is-hovered').forEach(r => r.classList.remove('is-hovered'));
+      clearHighlight();
+    });
+  }
+
+  function renderResidues(residues) {
+    const list = document.getElementById('residues-list');
+    list.innerHTML = '';
+
+    const fragment = document.createDocumentFragment();
+    for (const res of residues) {
+      const row = document.createElement('div');
+      row.className = 'residue-row';
+      row.dataset.chain = res.chain;
+      row.dataset.resid = res.resid;
+
+      const idSpan = document.createElement('span');
+      idSpan.className = 'residue-id';
+      idSpan.textContent = res.resid;
+
+      const aaSpan = document.createElement('span');
+      aaSpan.className = 'residue-aa';
+      aaSpan.textContent = res.aa.three;
+
+      const picker = document.createElement('input');
+      picker.type = 'color';
+      picker.className = 'res-color';
+      picker.value = rgbToHex(res.color.RGB);
+      picker.addEventListener('input', (e) => {
+        clearHighlight();
+        canvas.setResidueColor(res.resid, hexToRgb(e.target.value));
+      });
+
+      const swatch = document.createElement('div');
+      swatch.className = 'color-swatch';
+      swatch.appendChild(picker);
+
+      row.appendChild(idSpan);
+      row.appendChild(aaSpan);
+      row.appendChild(swatch);
+      fragment.appendChild(row);
+    }
+    list.appendChild(fragment);
+
+    // Hover delegation on the residues container
+    list.addEventListener('mouseover', (e) => {
+      const row = e.target.closest('.residue-row');
+      if (!row) return;
+      const resid = row.dataset.resid;
+      if (row.classList.contains('is-hovered')) return;
+      document.querySelectorAll('.residue-row.is-hovered').forEach(r => r.classList.remove('is-hovered'));
+      row.classList.add('is-hovered');
+      highlightResidue(resid);
+    });
+
+    list.addEventListener('mouseleave', () => {
+      document.querySelectorAll('.residue-row.is-hovered').forEach(r => r.classList.remove('is-hovered'));
+      clearHighlight();
+    });
+  }
+
+  function filterResidues(query) {
+    document.querySelectorAll('#residues-list .residue-row').forEach(row => {
+      if (!query) { row.style.display = ''; return; }
+      const resid = (row.dataset.resid || '').toLowerCase();
+      const chain = (row.dataset.chain || '').toLowerCase();
+      const aa = (row.querySelector('.residue-aa')?.textContent || '').toLowerCase();
+      row.style.display = (resid.includes(query) || chain.includes(query) || aa.includes(query)) ? '' : 'none';
+    });
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────────
+  function setStatus(msg) {
+    document.getElementById('status').textContent = msg;
+  }
+
+  function setLoading(loading) {
+    ['btn-pdb', 'btn-alphafold', 'btn-demo'].forEach(id => {
+      document.getElementById(id).disabled = loading;
+    });
+  }
+
+  function hexToRgb(hex) {
+    return [
+      parseInt(hex.slice(1, 3), 16),
+      parseInt(hex.slice(3, 5), 16),
+      parseInt(hex.slice(5, 7), 16),
+    ];
+  }
+
+  function rgbToHex([r, g, b]) {
+    return '#' + [r, g, b].map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+  }
+</script>
+</html>
