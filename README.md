@@ -11,6 +11,8 @@ It creates a canvas within an HTML page where you can display and interact with 
 It is written in JavaScript and uses the [p5.js](https://p5js.org/) library to facilitate display and interactivity.
 The goal of the project is to provide a cute little viewer for everyone to play with protein 3D structures and to get coarse-grain schematic graphics of your favorite structures (like the ones shown in the image above).  
 
+Demo: https://MatsveiTsishyn.github.io/LittleProtein/
+
 Author: Matsvei Tsishyn
 
 ## Usage
