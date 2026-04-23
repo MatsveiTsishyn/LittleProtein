@@ -30,6 +30,7 @@ class ProteinCanvas {
         this.Y = Y; // canvas height
         this.previousMousePosition = [X/2, Y/2]; // mouse tracker
         this.forceDrawNextFrame = false; // Parameter to force draw() for the next frame
+        this.onStructureLoaded = null; // Callback function called when a new structure is loaded
 
         // Init Protein Structure
         let structure = ProteinStructure.empty_structure();
@@ -203,6 +204,11 @@ class ProteinCanvas {
             this.drawer.setEmptyDisplayText("");
             this.drawer.setProteinStructure(proteinStructure);
             this.forceDrawNextFrame = true;
+            
+            // Call the callback if set
+            if (this.onStructureLoaded) {
+                this.onStructureLoaded();
+            }
         } catch(error) {
             this.logError(`ERROR in ProteinCanvas.from_string('${pdb_name}'): Failed: \n${error.message}`);
             return null;
