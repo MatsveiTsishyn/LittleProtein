@@ -11,22 +11,28 @@ It creates a canvas within an HTML page where you can display and interact with 
 It is written in JavaScript and uses the [p5.js](https://p5js.org/) library to facilitate display and interactivity.
 The goal of the project is to provide a cute little viewer for everyone to play with protein 3D structures and to get coarse-grain schematic graphics of your favorite structures (like the ones shown in the image above).  
 
-Demo: https://MatsveiTsishyn.github.io/LittleProtein/
-
-Author: Matsvei Tsishyn
+**Demo**: https://MatsveiTsishyn.github.io/LittleProtein/
 
 ## Usage
 
 ### (1) Just play
 
-**Download** the project and **just click** on `demo.html` to open it in a web browser.  
-You will see an example of a protein 3D structure, but you can **drag and drop** any `.pdb` file you have. For instance, you can find some `.pdb` files on the [Protein Data Bank](https://www.rcsb.org/) and on the [AlphaFoldDB](https://alphafold.com/).
-Use mouse, left click, mouse wheel and Shift button to interact with the canvas.  
+#### Online Demo
+Open the **[Live Demo](https://MatsveiTsishyn.github.io/LittleProtein/)** in your browser. You can immediately start exploring protein 3D structures with an interactive UI:
+- Fetch structures directly from the [Protein Data Bank (PDB)](https://www.rcsb.org/) using a PDB ID (e.g., `1ACB`)
+- Fetch structures from [AlphaFoldDB](https://alphafold.com/) using a UniProt ID (e.g., `P08397`)
+- Load a demo protein structure
+- Drag and drop any `.pdb` file to visualize it
 
-### (2) Include to your own web page
+#### Local Development
+To run LittleProtein Demo locally on your machine, run the following command from directory `./playground/`:
+```bash
+npm run dev
+```
 
-To include LittleProtein in your own web site, just include `littleprotein.js` script in your project.
-You can then import the script and create a LittleProtein canvas with only a few lines of HTML/JavaScript:
+### (2) Include in your own web page
+
+To integrate LittleProtein into your own HTML page, use the `littleprotein.js` script (or build it from source). Here's a basic template similar to [demo.html](demo.html):
 
 ```html
 <!DOCTYPE html>
@@ -42,20 +48,18 @@ You can then import the script and create a LittleProtein canvas with only a few
       1200,                     // width (X coordinate) of the canvas
       800,                      // height (Y coordinate) of the canvas
     );
-    lpCanvas.loadDemoProtein(); // Load default demo protein strucure
+    lpCanvas.loadDemoProtein(); // Load default demo protein structure
   </script>
 
 </body>
 </html>
 ```
 
-### (3) Customize the canvas
-
-Start from the `demo.html` example page as template to custom the LittleProtein canvas.
-
 #### Display a different protein structure
 
-First display an empty canvas with:
+By default, the canvas shows the demo protein. You can load other structures:
+
+**Empty canvas** (user can drag and drop files):
 ```JavaScript
 const lpCanvas = LittleProteinStarter.start(
   "#LittleProteinCanvas1",
@@ -63,15 +67,19 @@ const lpCanvas = LittleProteinStarter.start(
   800
 );
 ```
-The user can then drag and drop a protein structure in the canvas.
 
-You can display the demo protein structure with:
+**Load demo protein**:
 ```JavaScript
 lpCanvas.loadDemoProtein();
 ```
 
-You can load a custom protein structure from a JavaScript string object in the `.pdb` format with:
+**Load from PDB or AlphaFoldDB**:
+```JavaScript
+lpCanvas.fetch("1ACB");   // Fetch from PDB using a PDB ID
+lpCanvas.fetch("P08397"); // Fetch from AlphaFoldDB using a UniProt ID
+```
 
+**Load from a PDB string**:
 ```JavaScript
 const myProtein = "\
 ATOM      1  CA  ALA A   1      62.596  27.817  65.964  1.00 43.99           C  \n\
@@ -80,16 +88,9 @@ ATOM      2  CA  ASN A   2      62.033  24.076  65.700  1.00 40.93           C  
 lpCanvas.fromString(myProtein);
 ```
 
-You can also fetch a PDB file directly from the [Protein Data Bank](https://www.rcsb.org/) or the [AlphaFoldDB](https://alphafold.com/) with:
+#### Customize the canvas
 
-```JavaScript
-lpCanvas.fetch("1ACB");   // Fetch from the PDB using a PDB ID
-lpCanvas.fetch("P08397"); // Fetch from the AlphaFoldDB using a UniProt ID
-```
-
-#### Custom display settings
-
-You can change display settings with the following parameters:
+You can customize display settings through options:
 
 ```JavaScript
 const lpCanvas = LittleProteinStarter.start(
@@ -101,51 +102,52 @@ const lpCanvas = LittleProteinStarter.start(
     "depthShadeFactor": 2.0, // set strength of depth shading
     "viewDistance": 1.5, // set projection deformations strength
     "residuesScale": 2.0, // set residues display size
-    "colorsList": [[238, 155,   0], [225,   0,  12]] // overwrite default list of colors
+    "colorsList": [[238, 155, 0], [225, 0, 12]] // overwrite default list of colors
     "colorsMap": {"A": [50, 50, 50]}, // set map of colors for chains
   }
 );
 ```
 
-Alternatively, you can reset these parameters after initialization with:
+Or reset parameters after initialization:
 ```JavaScript
 lpCanvas.setBackgroundColor([230, 150, 150]);
 lpCanvas.setDepthShadeFactor(2.0);
 lpCanvas.setViewDistance(1.5);
 lpCanvas.setResiduesScale(2.0);
-lpCanvas.setColorsList([[238, 155,   0], [225,   0,  12]]);
+lpCanvas.setColorsList([[238, 155, 0], [225, 0, 12]]);
 lpCanvas.setColorsMap({"A": [50, 50, 50]});
 ```
 
 #### Set colors
 
+**Chain-based coloring** (default):
+LittleProtein assigns a different color to each chain from the `colorsList`. When colors run out, the list loops back to the beginning.
 
-- Chain-based Coloring (Default):
-LittleProtein loop on the list `colorsList` to assign a different color for each different chain. When the last color is reached, the loop restarts at the first color.
-You can override the default colors sequence by providing your own `colorsList` (see above).
-
-- `colorsMap` Overrides:
-If a specific chain is defined in the `colorsMap` (see above), its assigned color will override the default from `colorsList`.
-
-- Manual Color Overrides:
-You can override the color for a specific chain or an individual residue using:
+**Override default colors**:
 ```JavaScript
-lpCanvas.setChainColor("A", [50, 50, 50]);
-lpCanvas.setResidueColor("A13", [50, 50, 50]);
+lpCanvas.setChainColor("A", [50, 50, 50]);       // Set color for chain A
+lpCanvas.setResidueColor("A13", [50, 50, 50]);   // Set color for residue A13
 ```
 
-You can access each individual residue with:
+**Programmatic coloring**:
 ```JavaScript
 lpCanvas.proteinStructure.residues.forEach(res => {
   if(res.aa.three == "ALA"){
-    lpCanvas.setResidueColor(res.resid, [  0,  15, 35]);
+    lpCanvas.setResidueColor(res.resid, [0, 15, 35]);
   }
 });
 ```
 
 ## How LittleProtein works ?
 
-XXX 2D Flat display. XXX (to be written)
+**LittleProtein** uses a shader-free rendering approach to display protein 3D structures.
+It renders residues as simple 2D points on an HTML canvas using [p5.js](https://p5js.org/).
+
+The perception of 3D and depth is achieved through two simple techniques:
+
+1. **Rendering order**: Residues are sorted by their Z-coordinate (depth) and rendered from back to front. Objects further away are drawn first, so closer objects appear on top, creating a natural depth ordering.
+
+2. **Color lightness modulation**: Each residue's color brightness is adjusted based on its Z-coordinate using the `depthShadeFactor` parameter. Residues farther away (lower Z values) appear darker, while closer residues (higher Z values) appear lighter.
 
 ## Build from source
 
