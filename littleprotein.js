@@ -1812,6 +1812,20 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
             this.forceDrawNextFrame = true;
         }
 
+        // Resize method
+        resize(newX, newY){
+            this.X = newX;
+            this.Y = newY;
+            this.sketch.resizeCanvas(newX, newY);
+            this.drawer.X = newX;
+            this.drawer.Y = newY;
+            this.drawer.translationCenter = [newX/2, newY/2];
+            this.drawer.translationCenterRange = [-0.5 * Math.max(newX, newY), 1.5 * Math.max(newX, newY)];
+            this.drawer.zoom = Math.min(newX, newY)*0.80;
+            this.drawer.zoomRange = [Math.min(newX, newY)*0.05, Math.max(newX, newY)*4];
+            this.forceDrawNextFrame = true;
+        }
+
     }
 
 
