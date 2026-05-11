@@ -160,10 +160,10 @@ class ProteinCanvas {
         const proteinStructure = ProteinStructure.parse_pdb(
             pdb_id,
             pdb_str,
-            //ignoreWater=this.ignoreWater,
-            //ignoreHydrogen=this.ignoreHydrogen,
-            //ignoreLigands=this.ignoreLigands,
-            //ignoreHeteroatoms=this.ignoreHeteroatoms,
+            this.ignoreWater,
+            this.ignoreHydrogen,
+            this.ignoreLigands,
+            this.ignoreHeteroatoms,
         );
         this.drawer.setEmptyDisplayText("");
         this.drawer.setProteinStructure(proteinStructure);
@@ -216,10 +216,10 @@ class ProteinCanvas {
             const proteinStructure = ProteinStructure.parse_pdb(
                 pdb_name,
                 pdb_str,
-                //ignoreWater=this.ignoreWater,
-                //ignoreHydrogen=this.ignoreHydrogen,
-                //ignoreLigands=this.ignoreLigands,
-                //ignoreHeteroatoms=this.ignoreHeteroatoms,
+                this.ignoreWater,
+                this.ignoreHydrogen,
+                this.ignoreLigands,
+                this.ignoreHeteroatoms,
             );
             this.drawer.setEmptyDisplayText("");
             this.drawer.setProteinStructure(proteinStructure);

@@ -1101,7 +1101,6 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
                     const chain = line[21];
                     if (closedChains.has(chain) && ignoreLigands) continue;
                     const resid = line.substring(21, 27).replace(/\s+/g, ''); // Delete all " " from string (JavaScript is doomed ...)
-                    if (ignoreWater && resid == 'HOH') continue;
                     if (!resid_lines.hasOwnProperty(resid)) {
                         resid_lines[resid] = [];
                     }
@@ -1131,6 +1130,7 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
 
                 // Parse aa
                 const aa = new AminoAcid(resLines[0].substring(17, 20));
+                if (ignoreWater && aa.three == 'HOH') continue;
 
                 // Parse coords
                 const atomsList = [];
@@ -1805,10 +1805,10 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
             const proteinStructure = ProteinStructure.parse_pdb(
                 pdb_id,
                 pdb_str,
-                //ignoreWater=this.ignoreWater,
-                //ignoreHydrogen=this.ignoreHydrogen,
-                //ignoreLigands=this.ignoreLigands,
-                //ignoreHeteroatoms=this.ignoreHeteroatoms,
+                this.ignoreWater,
+                this.ignoreHydrogen,
+                this.ignoreLigands,
+                this.ignoreHeteroatoms,
             );
             this.drawer.setEmptyDisplayText("");
             this.drawer.setProteinStructure(proteinStructure);
@@ -1861,10 +1861,10 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
                 const proteinStructure = ProteinStructure.parse_pdb(
                     pdb_name,
                     pdb_str,
-                    //ignoreWater=this.ignoreWater,
-                    //ignoreHydrogen=this.ignoreHydrogen,
-                    //ignoreLigands=this.ignoreLigands,
-                    //ignoreHeteroatoms=this.ignoreHeteroatoms,
+                    this.ignoreWater,
+                    this.ignoreHydrogen,
+                    this.ignoreLigands,
+                    this.ignoreHeteroatoms,
                 );
                 this.drawer.setEmptyDisplayText("");
                 this.drawer.setProteinStructure(proteinStructure);

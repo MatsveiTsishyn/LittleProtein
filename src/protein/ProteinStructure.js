@@ -61,7 +61,6 @@ export class ProteinStructure {
                 const chain = line[21];
                 if (closedChains.has(chain) && ignoreLigands) continue;
                 const resid = line.substring(21, 27).replace(/\s+/g, ''); // Delete all " " from string (JavaScript is doomed ...)
-                if (ignoreWater && resid == 'HOH') continue;
                 if (!resid_lines.hasOwnProperty(resid)) {
                     resid_lines[resid] = [];
                 }
@@ -91,6 +90,7 @@ export class ProteinStructure {
 
             // Parse aa
             const aa = new AminoAcid(resLines[0].substring(17, 20));
+            if (ignoreWater && aa.three == 'HOH') continue;
 
             // Parse coords
             const atomsList = [];
