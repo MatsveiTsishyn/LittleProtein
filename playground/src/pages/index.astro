@@ -183,6 +183,13 @@
       cursor: pointer;
     }
 
+    .control-row input[type="checkbox"] {
+      justify-self: start;
+      grid-column: 2 / -1;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
     .control-row .val {
       text-align: right;
       font-size: 11px;
@@ -407,6 +414,11 @@
           <label>Background</label>
           <input type="color" id="bg-color" value="#0d1117" />
         </div>
+
+        <div class="control-row">
+          <label>Only C-alpha</label>
+          <input type="checkbox" id="only-calpha" />
+        </div>
       </div>
 
       <!-- Chain colors (revealed after load) -->
@@ -579,6 +591,10 @@
 
     document.getElementById('bg-color').addEventListener('input', (e) => {
       canvas?.setBackgroundColor(hexToRgb(e.target.value));
+    });
+
+    document.getElementById('only-calpha').addEventListener('change', (e) => {
+      canvas?.setOnlyCalphaMode(e.target.checked);
     });
 
     document.getElementById('residue-filter').addEventListener('input', (e) => {
