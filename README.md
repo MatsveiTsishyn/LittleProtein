@@ -98,6 +98,7 @@ const lpCanvas = LittleProteinStarter.start(
   1200,
   800,
   { // display options
+    "onlyCalphaMode": false, // show only C-alpha atoms
     "backgroundColor": [230, 150, 150], // set background color
     "depthShadeFactor": 2.0, // set strength of depth shading
     "viewDistance": 1.5, // set projection deformations strength

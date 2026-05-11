@@ -32,6 +32,12 @@ class ProteinCanvas {
         this.forceDrawNextFrame = false; // Parameter to force draw() for the next frame
         this.onStructureLoaded = null; // Callback function called when a new structure is loaded
 
+        // Init PDB parsing options
+        this.ignoreWater = options.ignoreWater ?? true;
+        this.ignoreHydrogen = options.ignoreHydrogen ?? true;
+        this.ignoreLigands = options.ignoreLigands ?? false;
+        this.ignoreHeteroatoms = options.ignoreHeteroatoms ?? false;
+
         // Init Protein Structure
         let structure = ProteinStructure.empty_structure();
 
@@ -151,7 +157,14 @@ class ProteinCanvas {
         }
 
         // Display
-        const proteinStructure = ProteinStructure.parse_pdb(pdb_id, pdb_str);
+        const proteinStructure = ProteinStructure.parse_pdb(
+            pdb_id,
+            pdb_str,
+            //ignoreWater=this.ignoreWater,
+            //ignoreHydrogen=this.ignoreHydrogen,
+            //ignoreLigands=this.ignoreLigands,
+            //ignoreHeteroatoms=this.ignoreHeteroatoms,
+        );
         this.drawer.setEmptyDisplayText("");
         this.drawer.setProteinStructure(proteinStructure);
         this.forceDrawNextFrame = true;
@@ -200,7 +213,14 @@ class ProteinCanvas {
             if (typeof(pdb_str) !== "string") {
                 throw new Error(`ERROR in LittleProtein::from_string('${pdb_name}'): input must be a string.`);
             }
-            const proteinStructure = ProteinStructure.parse_pdb(pdb_name, pdb_str);
+            const proteinStructure = ProteinStructure.parse_pdb(
+                pdb_name,
+                pdb_str,
+                //ignoreWater=this.ignoreWater,
+                //ignoreHydrogen=this.ignoreHydrogen,
+                //ignoreLigands=this.ignoreLigands,
+                //ignoreHeteroatoms=this.ignoreHeteroatoms,
+            );
             this.drawer.setEmptyDisplayText("");
             this.drawer.setProteinStructure(proteinStructure);
             this.forceDrawNextFrame = true;
@@ -279,6 +299,11 @@ class ProteinCanvas {
 
     setChainColor(chain, colorRGB){
         this.drawer.setChainColor(chain, colorRGB);
+        this.forceDrawNextFrame = true;
+    }
+
+    setOnlyCalphaMode(onlyCalphaMode){
+        this.drawer.setOnlyCalphaMode(onlyCalphaMode);
         this.forceDrawNextFrame = true;
     }
 

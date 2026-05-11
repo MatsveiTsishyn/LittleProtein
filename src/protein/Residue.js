@@ -5,9 +5,9 @@ Contained Class for a protein Residue
 */
 
 // Imports ---------------------------------------------------------------------
-import { LinAlg } from "../utils/LinAlg.js";
-import { Color } from "../utils/Color.js";
+import { Atom } from "./Atom.js";
 import { AminoAcid } from "./AminoAcid.js";
+import { Color } from "../utils/Color.js";
 
 
 // Residue ---------------------------------------------------------------------
@@ -18,11 +18,34 @@ export class Residue {
     static DEFAULT_COLOR_VALUE = [45, 45, 45];
 
     // Constructor -------------------------------------------------------------
-    constructor(resid, aa, c_alpha, color=null) {
+    constructor(resid, aa, atomsList=[], color=null) {
+        
+        // Type checking
+        if (typeof resid !== 'string' || resid.length < 2) {
+            throw new Error("Residue ID (resid) must be a string of length 2 or more (like 'A15').");
+        }
+        if (!(aa instanceof AminoAcid)) {
+            throw new Error("Amino acid (aa) must be an instance of AminoAcid.");
+        }
+        if (!Array.isArray(atomsList) || !atomsList.every(atom => atom instanceof Atom)) {
+            throw new Error("atomsList must be an array of Atom instances.");
+        }
+        if (color !== null && !(color instanceof Color)) {
+            throw new Error("color must be an instance of Color or null.");
+        }
+
+        // Set
         this.resid = resid;
         this.aa = aa;
-        this.c_alpha = c_alpha;
+        this.atomsList = atomsList;
         this.color = color === null ? new Color(...Residue.DEFAULT_COLOR_VALUE) : color;
+        this.atomCalpha = null;
+        this.atomsList.forEach(atom => {
+            if (atom.name == 'CA') {
+                this.atomCalpha = atom;
+            }
+        })
+
     }
 
     // Getters -----------------------------------------------------------------
@@ -36,24 +59,16 @@ export class Residue {
 
     // Methods -----------------------------------------------------------------
     print(){
-        console.log(`Residue ${this.aa} at ${this.resid}`);
-        return this;
+        console.log(`Residue '${this.aa}' at ${this.resid}`);
     }
 
     // Mutation Methods --------------------------------------------------------
     transform(matrix){
-        this.c_alpha = LinAlg.dim3.mult(this.c_alpha, matrix);
-        return this;
-    }
-
-    setCoord(c_alpha){
-        this.c_alpha = c_alpha;
-        return this;
+        this.atomsList.forEach(atom => atom.transform(matrix));
     }
 
     setColor(color_arr){
         this.color = new Color(...color_arr);
-        return this;
     }
 
 }

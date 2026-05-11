@@ -723,6 +723,41 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
     };
 
     /*
+    Container Class for an Atom with its 3D coordiantes
+        - name ::str atom type name
+        - coord ::[flota, float, float] atom 3D coordinates
+    */
+
+
+
+    // Atom ------------------------------------------------------------------------
+    class Atom {
+        
+        // Constructor -------------------------------------------------------------
+        constructor(name, coord) {
+            if (typeof name !== 'string') {
+                throw new Error("Atom name must be a string.");
+            }
+            if (!Array.isArray(coord) || coord.length !== 3 ||
+                !coord.every(c => typeof c === 'number' && !isNaN(c))) {
+                throw new Error("Atom coord must be an array of 3 numbers.");
+            }
+            this.name = name;
+            this.coord = coord;
+        }
+
+        // Methods -----------------------------------------------------------------
+        print(){
+            console.log(`Atom '${this.name}'`);
+        }
+
+        transform(matrix){
+            this.coord = LinAlg.dim3.mult(this.coord, matrix);
+        }
+
+    }
+
+    /*
     Container Class to handle Amino Acid object.
         - manages 1-letter-codes vs. 3-letter-codes
         - manage non-standard amino acids
@@ -954,11 +989,34 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
         static DEFAULT_COLOR_VALUE = [45, 45, 45];
 
         // Constructor -------------------------------------------------------------
-        constructor(resid, aa, c_alpha, color=null) {
+        constructor(resid, aa, atomsList=[], color=null) {
+            
+            // Type checking
+            if (typeof resid !== 'string' || resid.length < 2) {
+                throw new Error("Residue ID (resid) must be a string of length 2 or more (like 'A15').");
+            }
+            if (!(aa instanceof AminoAcid)) {
+                throw new Error("Amino acid (aa) must be an instance of AminoAcid.");
+            }
+            if (!Array.isArray(atomsList) || !atomsList.every(atom => atom instanceof Atom)) {
+                throw new Error("atomsList must be an array of Atom instances.");
+            }
+            if (color !== null && !(color instanceof Color)) {
+                throw new Error("color must be an instance of Color or null.");
+            }
+
+            // Set
             this.resid = resid;
             this.aa = aa;
-            this.c_alpha = c_alpha;
+            this.atomsList = atomsList;
             this.color = color === null ? new Color(...Residue.DEFAULT_COLOR_VALUE) : color;
+            this.atomCalpha = null;
+            this.atomsList.forEach(atom => {
+                if (atom.name == 'CA') {
+                    this.atomCalpha = atom;
+                }
+            });
+
         }
 
         // Getters -----------------------------------------------------------------
@@ -972,24 +1030,16 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
 
         // Methods -----------------------------------------------------------------
         print(){
-            console.log(`Residue ${this.aa} at ${this.resid}`);
-            return this;
+            console.log(`Residue '${this.aa}' at ${this.resid}`);
         }
 
         // Mutation Methods --------------------------------------------------------
         transform(matrix){
-            this.c_alpha = LinAlg.dim3.mult(this.c_alpha, matrix);
-            return this;
-        }
-
-        setCoord(c_alpha){
-            this.c_alpha = c_alpha;
-            return this;
+            this.atomsList.forEach(atom => atom.transform(matrix));
         }
 
         setColor(color_arr){
             this.color = new Color(...color_arr);
-            return this;
         }
 
     }
@@ -1005,7 +1055,11 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
     class ProteinStructure {
 
         // Constructor -------------------------------------------------------------
-        constructor(name, residues, scale){
+        constructor(
+            name,
+            residues,
+            scale,
+        ){
 
             // Init base properties
             this.name = name;
@@ -1024,75 +1078,102 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
             return new ProteinStructure("EmptyStructure", [], 1.0, []);
         }
         
-        static parse_pdb(name, pdb_string) {
+        static parse_pdb(
+            name,
+            pdb_string,
+            ignoreWater=true,
+            ignoreHydrogen=true,
+            ignoreLigands=false,
+            ignoreHeteroatoms=false,
+        ){
 
-            // Init
-            const residues = [];
+            // Select coordinates lines and group by resid
+            const pdb_lines = pdb_string.split("\n");
             let modelCounter = 0;
             let currentChain = null;
             const closedChains = new Set();
-            const pdb_lines = pdb_string.split("\n");
-
-            // Parse PDB string and generate residues list
+            const resid_lines = {};
             for (const line of pdb_lines) {
 
-                // Init
+                // Manage coord lines
                 const prefix = line.substring(0, 6);
-
-                // Case: ATOM line
-                if ((prefix === "ATOM  " || prefix === "HETATM") && line.substring(13, 15) === "CA") {
+                if (prefix === "ATOM  " || (prefix === "HETATM" && !ignoreHeteroatoms)) {
                     const chain = line[21];
-                    if (closedChains.has(chain)) continue;
-
+                    if (closedChains.has(chain) && ignoreLigands) continue;
                     const resid = line.substring(21, 27).replace(/\s+/g, ''); // Delete all " " from string (JavaScript is doomed ...)
-                    const cAlpha = [
-                        parseFloat(line.substring(30, 38)),
-                        parseFloat(line.substring(38, 46)),
-                        parseFloat(line.substring(46, 54)),
-                    ];
-
-                    const aaStr = line.substring(17, 20);
-                    const aa = new AminoAcid(aaStr);
-                    const residue = new Residue(resid, aa, cAlpha);
-                    residues.push(residue);
+                    if (ignoreWater && resid == 'HOH') continue;
+                    if (!resid_lines.hasOwnProperty(resid)) {
+                        resid_lines[resid] = [];
+                    }
+                    resid_lines[resid].push(line);
                     currentChain = chain;
-                    continue;
                 }
 
                 // Case: MODEL line
-                if (prefix === "MODEL ") {
+                else if (prefix === "MODEL ") {
                     modelCounter += 1;
                     if (modelCounter > 1) break;
-                    continue;
                 }
 
                 // Case: End chain line
-                if (prefix.startsWith("TER")) {
+                else if (prefix.startsWith("TER")) {
                     if (currentChain !== null) {
                         closedChains.add(currentChain);
                     }
-                    continue;
+                }
+
+            }
+
+            // Create residues
+            const residues = [];
+            const HYDROGEN_PREFIXES = ["H", "1H", "2H", "3H"];
+            for (const [resid, resLines] of Object.entries(resid_lines)) {
+
+                // Parse aa
+                const aa = new AminoAcid(resLines[0].substring(17, 20));
+
+                // Parse coords
+                const atomsList = [];
+                for (const line of resLines) {
+                    const atomType = line.substring(12, 16).replace(/\s+/g, '');
+                    if (ignoreHydrogen && HYDROGEN_PREFIXES.some(hp => atomType.startsWith(hp))) {
+                        continue;
+                    }
+                    const x = parseFloat(line.substring(30, 38).trim());
+                    const y = parseFloat(line.substring(38, 46).trim());
+                    const z = parseFloat(line.substring(46, 54).trim());
+                    if (isNaN(x) || isNaN(y) || isNaN(z)) continue;
+                    const atom = new Atom(atomType, [x, y, z]);
+                    atomsList.push(atom);
+                }
+                if (atomsList.length > 0) {
+                    const residue = new Residue(resid, aa, atomsList);
+                    residues.push(residue);
                 }
             }
 
             // Scale protein to fit the box
-            const c_alpha_arr = residues.map(res => res.c_alpha);
+            const all_atoms_coords = residues.flatMap(res =>
+                res.atomsList.map(atom => atom.coord)
+            );
             const box3D = [[-0.5, 0.5], [-0.5, 0.5], [-0.5, 0.5]];
-            const [c_alpha_arr_centered, coeff] = LinAlg.dim3.mapToBox(c_alpha_arr, box3D);
-            
-            residues.forEach((residue, i) => {
-                residue.c_alpha = c_alpha_arr_centered[i];
+            const [all_atoms_centered, scale] = LinAlg.dim3.mapToBox(all_atoms_coords, box3D);
+            let atomIndex = 0;
+            residues.forEach(residue => {
+                residue.atomsList.forEach(atom => {
+                    atom.coord = all_atoms_centered[atomIndex];
+                    atomIndex++;
+                });
             });
 
             // Generate ProteinStructure and return
-            return new ProteinStructure(name, residues, coeff);
+            return new ProteinStructure(name, residues, scale);
         }
 
         // Mutation Methods --------------------------------------------------------
         rotate(angleXZ, angleYZ){
             const rotationMatrix = LinAlg.dim3.getRotationMatrix(angleXZ, angleYZ);
             this.residues.forEach(residue => residue.transform(rotationMatrix));
-            return this;
         }
 
         // Get Methods -------------------------------------------------------------
@@ -1113,15 +1194,6 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
 
         print(){
             console.log(`Protein '${this.name}' with ${this.length} elements.`);
-            return this;
-        }
-
-        getCoord(){
-            return this.residues.map(res => res.coord);
-        }
-
-        getResids(){
-            return this.residues.map(res => res.resid);
         }
 
     }
@@ -1167,6 +1239,7 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
         static VIEW_DISTANCE_RANGE = [0.50, 100.00];
         static RESIDUEE_SCALE = 1.0;
         static RESIDUEE_SCALE_RANGE = [0.05, 10.00];
+        static ONLY_CALPHA_MODE = false;
 
 
         // Constructor -------------------------------------------------------------
@@ -1189,6 +1262,7 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
             this.viewDistance = ProteinDrawer.VIEW_DISTANCE;
             this.residuesScale = ProteinDrawer.RESIDUEE_SCALE;
             this.emptyDisplayText = ProteinDrawer.EMPTY_DISPLAY_TEXT;
+            this.onlyCalphaMode = ProteinDrawer.ONLY_CALPHA_MODE;
 
             // Init structure
             this.setProteinStructure(structure);
@@ -1202,6 +1276,7 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
             if ("viewDistance" in options) this.setViewDistance(options["viewDistance"]);
             if ("residuesScale" in options) this.setResiduesScale(options["residuesScale"]);
             if ("emptyDisplayText" in options) this.setEmptyDisplayText(options["emptyDisplayText"]);
+            if ("onlyCalphaMode" in options) this.setOnlyCalphaMode(options["onlyCalphaMode"]);
 
         }
 
@@ -1363,6 +1438,12 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
             }
         }
 
+        setOnlyCalphaMode(onlyCalphaMode){
+            if (typeof onlyCalphaMode === 'boolean') {
+                this.onlyCalphaMode = onlyCalphaMode;
+            }
+        }
+
 
         // Draw protein Methods ----------------------------------------------------
         draw(sketch){
@@ -1370,21 +1451,41 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
             // Background
             this.drawBackground(sketch);
 
-            // Sort residues for depth
-            this.proteinStructure.residues.sort((r1, r2) => r1.c_alpha[2] - r2.c_alpha[2]);
+            // Extract all atoms with cached color
+            let allAtoms;
+            if (this.onlyCalphaMode) {
+                allAtoms = this.proteinStructure.residues
+                    .filter(res => res.atomCalpha != null)
+                    .map(res => [res.atomCalpha.coord, res.color]);
+            } else {
+                allAtoms = this.proteinStructure.residues.flatMap(res =>
+                    res.atomsList.map(atom => [
+                        atom.coord,
+                        res.color,
+                    ])
+                );
+            }
 
-            // Draw residues
-            const strokeWeightResidue = this.strokeWeightResidue();
-            this.proteinStructure.residues.forEach(residue => {
-                const coord = residue.c_alpha;
+            // Sort atoms by Z-coordinate (depth)
+            allAtoms.sort((a1, a2) => a1[0][2] - a2[0][2]);
+
+            // Draw atoms
+            const strokeWeight = this.getStrokeWeight();
+            allAtoms.forEach(([coord, color]) => {
                 const proj = LinAlg.dim3.project2D(coord, this.viewDistance);
                 const proj_scaled = LinAlg.dim2.scalMult(this.zoom, proj);
                 const proj_centered = LinAlg.dim2.sum(proj_scaled, this.translationCenter);
-                sketch.stroke(...residue.color.updatedLightness(coord[2]*2.0*this.depthShadeFactor).RGB);
-                sketch.strokeWeight(strokeWeightResidue);
+                const displayColor = this.applyDepthColorEffect(coord ,color);
+                sketch.stroke(...displayColor.RGB);
+                sketch.strokeWeight(strokeWeight);
                 sketch.point(proj_centered[0], proj_centered[1]);
             });
 
+        }
+
+        applyDepthColorEffect(coord, color){
+            // Adapt color lightness based on coord z value to mimic from light
+            return color.updatedLightness(coord[2] * 2.0 * this.depthShadeFactor);
         }
 
         drawBackground(sketch){
@@ -1416,13 +1517,15 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
             return 0 <= x && x <= this.X && 0 <= y && y <= this.Y;
         }
 
-        strokeWeightResidue(){
-            // Here is a magic function so that the strokeWeight of a residue is constant
+        getStrokeWeight(){
+            // Here is a magic function so that the strokeWeight of a residue/atom is constant
             // whaterver the zoom or the size of the canvas or the size of the protein structure
             // This indeed appears strange, but do not think too much about it
-            return 1.6 * this.residuesScale * ProteinDrawer.C_ALPHA_DISTANCE * this.zoom / this.proteinStructure.scale
+            const ATOM_SCALE = 0.6;
+            const RESIDUE_SCALE = 1.6;
+            const objectScale = this.onlyCalphaMode ? RESIDUE_SCALE : ATOM_SCALE;
+            return objectScale * this.residuesScale * ProteinDrawer.C_ALPHA_DISTANCE * this.zoom / this.proteinStructure.scale;
         }
-
 
         // Update Drawer -----------------------------------------------------------
         updateRotation(angleXZ, angleYZ){
@@ -1572,6 +1675,13 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
             this.Y = Y; // canvas height
             this.previousMousePosition = [X/2, Y/2]; // mouse tracker
             this.forceDrawNextFrame = false; // Parameter to force draw() for the next frame
+            this.onStructureLoaded = null; // Callback function called when a new structure is loaded
+
+            // Init PDB parsing options
+            this.ignoreWater = options.ignoreWater ?? true;
+            this.ignoreHydrogen = options.ignoreHydrogen ?? true;
+            this.ignoreLigands = options.ignoreLigands ?? false;
+            this.ignoreHeteroatoms = options.ignoreHeteroatoms ?? false;
 
             // Init Protein Structure
             let structure = ProteinStructure.empty_structure();
@@ -1692,7 +1802,14 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
             }
 
             // Display
-            const proteinStructure = ProteinStructure.parse_pdb(pdb_id, pdb_str);
+            const proteinStructure = ProteinStructure.parse_pdb(
+                pdb_id,
+                pdb_str,
+                //ignoreWater=this.ignoreWater,
+                //ignoreHydrogen=this.ignoreHydrogen,
+                //ignoreLigands=this.ignoreLigands,
+                //ignoreHeteroatoms=this.ignoreHeteroatoms,
+            );
             this.drawer.setEmptyDisplayText("");
             this.drawer.setProteinStructure(proteinStructure);
             this.forceDrawNextFrame = true;
@@ -1741,10 +1858,22 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
                 if (typeof(pdb_str) !== "string") {
                     throw new Error(`ERROR in LittleProtein::from_string('${pdb_name}'): input must be a string.`);
                 }
-                const proteinStructure = ProteinStructure.parse_pdb(pdb_name, pdb_str);
+                const proteinStructure = ProteinStructure.parse_pdb(
+                    pdb_name,
+                    pdb_str,
+                    //ignoreWater=this.ignoreWater,
+                    //ignoreHydrogen=this.ignoreHydrogen,
+                    //ignoreLigands=this.ignoreLigands,
+                    //ignoreHeteroatoms=this.ignoreHeteroatoms,
+                );
                 this.drawer.setEmptyDisplayText("");
                 this.drawer.setProteinStructure(proteinStructure);
                 this.forceDrawNextFrame = true;
+                
+                // Call the callback if set
+                if (this.onStructureLoaded) {
+                    this.onStructureLoaded();
+                }
             } catch(error) {
                 this.logError(`ERROR in ProteinCanvas.from_string('${pdb_name}'): Failed: \n${error.message}`);
                 return null;
@@ -1760,6 +1889,20 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
         // Structure getter shortcut
         get proteinStructure(){
             return this.drawer.proteinStructure;
+        }
+
+        // Residue canvas
+        resize(newX, newY){
+            this.X = newX;
+            this.Y = newY;
+            this.sketch.resizeCanvas(newX, newY);
+            this.drawer.X = newX;
+            this.drawer.Y = newY;
+            this.drawer.translationCenter = [newX/2, newY/2];
+            this.drawer.translationCenterRange = [-0.5 * Math.max(newX, newY), 1.5 * Math.max(newX, newY)];
+            this.drawer.zoom = Math.min(newX, newY)*0.80;
+            this.drawer.zoomRange = [Math.min(newX, newY)*0.05, Math.max(newX, newY)*4];
+            this.forceDrawNextFrame = true;
         }
         
 
@@ -1804,25 +1947,16 @@ ATOM   2912  CA  TYR C 109      52.481  15.792  75.788  1.00 49.11           C  
             this.forceDrawNextFrame = true;
         }
 
+        setOnlyCalphaMode(onlyCalphaMode){
+            this.drawer.setOnlyCalphaMode(onlyCalphaMode);
+            this.forceDrawNextFrame = true;
+        }
+
 
         // Dependencies ------------------------------------------------------------
         logError(error_message){
             this.drawer.setEmptyDisplayText(error_message);
             console.error(error_message);
-            this.forceDrawNextFrame = true;
-        }
-
-        // Resize method
-        resize(newX, newY){
-            this.X = newX;
-            this.Y = newY;
-            this.sketch.resizeCanvas(newX, newY);
-            this.drawer.X = newX;
-            this.drawer.Y = newY;
-            this.drawer.translationCenter = [newX/2, newY/2];
-            this.drawer.translationCenterRange = [-0.5 * Math.max(newX, newY), 1.5 * Math.max(newX, newY)];
-            this.drawer.zoom = Math.min(newX, newY)*0.80;
-            this.drawer.zoomRange = [Math.min(newX, newY)*0.05, Math.max(newX, newY)*4];
             this.forceDrawNextFrame = true;
         }
 

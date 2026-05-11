@@ -44,6 +44,7 @@ export class ProteinDrawer {
     static VIEW_DISTANCE_RANGE = [0.50, 100.00];
     static RESIDUEE_SCALE = 1.0;
     static RESIDUEE_SCALE_RANGE = [0.05, 10.00];
+    static ONLY_CALPHA_MODE = false;
 
 
     // Constructor -------------------------------------------------------------
@@ -66,6 +67,7 @@ export class ProteinDrawer {
         this.viewDistance = ProteinDrawer.VIEW_DISTANCE;
         this.residuesScale = ProteinDrawer.RESIDUEE_SCALE;
         this.emptyDisplayText = ProteinDrawer.EMPTY_DISPLAY_TEXT;
+        this.onlyCalphaMode = ProteinDrawer.ONLY_CALPHA_MODE;
 
         // Init structure
         this.setProteinStructure(structure);
@@ -79,6 +81,7 @@ export class ProteinDrawer {
         if ("viewDistance" in options) this.setViewDistance(options["viewDistance"]);
         if ("residuesScale" in options) this.setResiduesScale(options["residuesScale"]);
         if ("emptyDisplayText" in options) this.setEmptyDisplayText(options["emptyDisplayText"]);
+        if ("onlyCalphaMode" in options) this.setOnlyCalphaMode(options["onlyCalphaMode"]);
 
     }
 
@@ -91,7 +94,7 @@ export class ProteinDrawer {
 
         // Set Color
         const nColors = this.colorsList.length;
-        const colorsMapFallback = {}
+        const colorsMapFallback = {};
         let i = 0;
         this.proteinStructure.residues.forEach( res => {
             const chain = res.chain;
@@ -240,6 +243,12 @@ export class ProteinDrawer {
         }
     }
 
+    setOnlyCalphaMode(onlyCalphaMode){
+        if (typeof onlyCalphaMode === 'boolean') {
+            this.onlyCalphaMode = onlyCalphaMode;
+        }
+    }
+
 
     // Draw protein Methods ----------------------------------------------------
     draw(sketch){
@@ -247,21 +256,41 @@ export class ProteinDrawer {
         // Background
         this.drawBackground(sketch);
 
-        // Sort residues for depth
-        this.proteinStructure.residues.sort((r1, r2) => r1.c_alpha[2] - r2.c_alpha[2]);
+        // Extract all atoms with cached color
+        let allAtoms;
+        if (this.onlyCalphaMode) {
+            allAtoms = this.proteinStructure.residues
+                .filter(res => res.atomCalpha != null)
+                .map(res => [res.atomCalpha.coord, res.color])
+        } else {
+            allAtoms = this.proteinStructure.residues.flatMap(res =>
+                res.atomsList.map(atom => [
+                    atom.coord,
+                    res.color,
+                ])
+            );
+        }
 
-        // Draw residues
-        const strokeWeightResidue = this.strokeWeightResidue()
-        this.proteinStructure.residues.forEach(residue => {
-            const coord = residue.c_alpha;
+        // Sort atoms by Z-coordinate (depth)
+        allAtoms.sort((a1, a2) => a1[0][2] - a2[0][2]);
+
+        // Draw atoms
+        const strokeWeight = this.getStrokeWeight();
+        allAtoms.forEach(([coord, color]) => {
             const proj = LinAlg.dim3.project2D(coord, this.viewDistance);
             const proj_scaled = LinAlg.dim2.scalMult(this.zoom, proj);
             const proj_centered = LinAlg.dim2.sum(proj_scaled, this.translationCenter);
-            sketch.stroke(...residue.color.updatedLightness(coord[2]*2.0*this.depthShadeFactor).RGB);
-            sketch.strokeWeight(strokeWeightResidue);
+            const displayColor = this.applyDepthColorEffect(coord ,color);
+            sketch.stroke(...displayColor.RGB);
+            sketch.strokeWeight(strokeWeight);
             sketch.point(proj_centered[0], proj_centered[1]);
-        })
+        });
 
+    }
+
+    applyDepthColorEffect(coord, color){
+        // Adapt color lightness based on coord z value to mimic from light
+        return color.updatedLightness(coord[2] * 2.0 * this.depthShadeFactor);
     }
 
     drawBackground(sketch){
@@ -293,13 +322,15 @@ export class ProteinDrawer {
         return 0 <= x && x <= this.X && 0 <= y && y <= this.Y;
     }
 
-    strokeWeightResidue(){
-        // Here is a magic function so that the strokeWeight of a residue is constant
+    getStrokeWeight(){
+        // Here is a magic function so that the strokeWeight of a residue/atom is constant
         // whaterver the zoom or the size of the canvas or the size of the protein structure
         // This indeed appears strange, but do not think too much about it
-        return 1.6 * this.residuesScale * ProteinDrawer.C_ALPHA_DISTANCE * this.zoom / this.proteinStructure.scale
+        const ATOM_SCALE = 0.6;
+        const RESIDUE_SCALE = 1.6;
+        const objectScale = this.onlyCalphaMode ? RESIDUE_SCALE : ATOM_SCALE;
+        return objectScale * this.residuesScale * ProteinDrawer.C_ALPHA_DISTANCE * this.zoom / this.proteinStructure.scale;
     }
-
 
     // Update Drawer -----------------------------------------------------------
     updateRotation(angleXZ, angleYZ){
