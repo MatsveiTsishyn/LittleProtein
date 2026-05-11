@@ -419,6 +419,26 @@
           <label>Only C-alpha</label>
           <input type="checkbox" id="only-calpha" />
         </div>
+
+        <div class="control-row">
+          <label>Ignore water</label>
+          <input type="checkbox" id="ignore-water" checked />
+        </div>
+
+        <div class="control-row">
+          <label>Ignore hydrogen</label>
+          <input type="checkbox" id="ignore-hydrogen" checked />
+        </div>
+
+        <div class="control-row">
+          <label>Ignore ligands</label>
+          <input type="checkbox" id="ignore-ligands" />
+        </div>
+
+        <div class="control-row">
+          <label>Ignore heteroatoms</label>
+          <input type="checkbox" id="ignore-heteroatoms" />
+        </div>
       </div>
 
       <!-- Chain colors (revealed after load) -->
@@ -595,6 +615,22 @@
 
     document.getElementById('only-calpha').addEventListener('change', (e) => {
       canvas?.setOnlyCalphaMode(e.target.checked);
+    });
+
+    document.getElementById('ignore-water').addEventListener('change', (e) => {
+      canvas.ignoreWater = e.target.checked;
+    });
+
+    document.getElementById('ignore-hydrogen').addEventListener('change', (e) => {
+      canvas.ignoreHydrogen = e.target.checked;
+    });
+
+    document.getElementById('ignore-ligands').addEventListener('change', (e) => {
+      canvas.ignoreLigands = e.target.checked;
+    });
+
+    document.getElementById('ignore-heteroatoms').addEventListener('change', (e) => {
+      canvas.ignoreHeteroatoms = e.target.checked;
     });
 
     document.getElementById('residue-filter').addEventListener('input', (e) => {
