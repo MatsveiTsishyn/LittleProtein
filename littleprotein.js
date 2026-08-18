@@ -4284,6 +4284,7 @@ ATOM   2924  HH  TYR C 109      45.906  14.494  74.486  1.00  0.00           H  
             this.X = X; // canvas width
             this.Y = Y; // canvas height
             this.previousMousePosition = [X/2, Y/2]; // mouse tracker
+            this.isDragging = false; // true while a mouse drag started on the canvas is ongoing
             this.forceDrawNextFrame = false; // Parameter to force draw() for the next frame
             this.onStructureLoaded = null; // Callback function called when a new structure is loaded
 
@@ -4314,6 +4315,11 @@ ATOM   2924  HH  TYR C 109      45.906  14.494  74.486  1.00  0.00           H  
                     const canvas = sketch.createCanvas(this.X, this.Y);
                     if (container) canvas.parent(container);
 
+                    // Block the browser native drag of the canvas (some browsers drag it
+                    // as an image), which would interrupt a rotation leaving the canvas
+                    canvas.elt.setAttribute("draggable", "false");
+                    canvas.elt.addEventListener("dragstart", (event) => event.preventDefault());
+
                     // First frame draw
                     this.drawer.draw(sketch);
 
@@ -4335,7 +4341,7 @@ ATOM   2924  HH  TYR C 109      45.906  14.494  74.486  1.00  0.00           H  
                     // Mouse movement trigger
                     const mouseX = sketch.mouseX;
                     const mouseY = sketch.mouseY;
-                    if(sketch.mouseIsPressed && this.drawer.isOnCanvas(mouseX, mouseY)){
+                    if(this.isDragging && sketch.mouseIsPressed){
                         const deltaMouse = [mouseX - this.previousMousePosition[0], mouseY - this.previousMousePosition[1]];
                         if(deltaMouse[0] != 0 || deltaMouse[1] != 0){
 
@@ -4377,7 +4383,16 @@ ATOM   2924  HH  TYR C 109      45.906  14.494  74.486  1.00  0.00           H  
                 // Mause Pressed ---------------------------------------------------
                 // Perform a first update of mouse position before sketch.draw() to keep coherence
                 sketch.mousePressed = () => {
+                    if(!this.drawer.isOnCanvas(sketch.mouseX, sketch.mouseY)) return;
+                    this.isDragging = true;
                     this.previousMousePosition = [sketch.mouseX, sketch.mouseY];
+                    return false; // prevent default: no text selection while dragging out of the canvas
+                };
+
+                // Mouse Released --------------------------------------------------
+                // End the drag, even when the mouse is released outside of the canvas
+                sketch.mouseReleased = () => {
+                    this.isDragging = false;
                 };
             
             });
